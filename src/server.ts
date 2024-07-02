@@ -4,7 +4,7 @@ function login(username: string): string {
     const user = {
         name: "Pushpankar",
     };
-    const name = user["name"];
+    const name = user.name;
     return username + name;
 }
 
