@@ -35,7 +35,7 @@ describe("POST /auth/register", () => {
 
                 email: "kpushpankar3@gmail.com",
 
-                password: "secret",
+                password: "secrettt",
             };
 
             // Act
@@ -58,7 +58,7 @@ describe("POST /auth/register", () => {
 
                 email: "kpushpankar3@gmail.com",
 
-                password: "secret",
+                password: "secrettt",
             };
 
             // Act
@@ -83,7 +83,7 @@ describe("POST /auth/register", () => {
 
                 email: "kpushpankar3@gmail.com",
 
-                password: "secret",
+                password: "secrettt",
             };
 
             // Act
@@ -117,7 +117,7 @@ describe("POST /auth/register", () => {
 
                 email: "kpushpankar3@gmail.com",
 
-                password: "secret",
+                password: "secrettt",
             };
 
             // Act
@@ -143,7 +143,7 @@ describe("POST /auth/register", () => {
 
                 email: "kpushpankar3@gmail.com",
 
-                password: "secret",
+                password: "secrettt",
             };
 
             // Act
@@ -224,6 +224,111 @@ describe("POST /auth/register", () => {
 
             const users = await userRepository.find();
 
+            expect(users).toHaveLength(0);
+        });
+
+        it("should return 400 satus code if first_name is missing ", async () => {
+            const userData = {
+                firstName: "",
+
+                lastName: "Singh",
+
+                email: "kpushpankar3@gmail.com",
+
+                password: "secret",
+            };
+
+            const response = await request(app)
+                .post("/auth/register")
+                .send(userData);
+
+            //Asert
+
+            expect(response.statusCode).toBe(400);
+
+            const userRepository = connection.getRepository(User);
+
+            const users = await userRepository.find();
+
+            expect(users).toHaveLength(0);
+        });
+
+        it("should return 400 satus code if first_name is missing ", async () => {
+            const userData = {
+                firstName: "Pushpankar",
+
+                lastName: "",
+
+                email: "kpushpankar3@gmail.com",
+
+                password: "secrettt",
+            };
+
+            const response = await request(app)
+                .post("/auth/register")
+                .send(userData);
+
+            //Asert
+
+            expect(response.statusCode).toBe(400);
+
+            const userRepository = connection.getRepository(User);
+
+            const users = await userRepository.find();
+
+            expect(users).toHaveLength(0);
+        });
+    });
+
+    describe("fields are not in proper format", () => {
+        it("should trim the email field", async () => {
+            //Arrange
+
+            const userData = {
+                firstName: "Pushpankar",
+
+                lastName: "Singh",
+
+                email: " kpushpankar3@gmail.com  ",
+
+                password: "secrettt",
+            };
+
+            await request(app).post("/auth/register").send(userData);
+
+            const userRepository = connection.getRepository(User);
+
+            const users = await userRepository.find();
+
+            const user = users[0];
+
+            expect(user.email).toBe("kpushpankar3@gmail.com");
+
+            //Asert
+        });
+
+        it("should return 400 status code if password length is less than 8 chars", async () => {
+            //Arrange
+
+            const userData = {
+                firstName: "Pushpankar",
+
+                lastName: "Singh",
+
+                email: " kpushpankar3@gmail.com  ",
+
+                password: "secret",
+            };
+
+            // Act
+            const response = await request(app)
+                .post("/auth/register")
+                .send(userData);
+
+            // Assert
+            expect(response.statusCode).toBe(400);
+            const userRepository = connection.getRepository(User);
+            const users = await userRepository.find();
             expect(users).toHaveLength(0);
         });
     });
