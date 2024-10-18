@@ -56,23 +56,6 @@ export class AuthController {
             const newRefreshToken =
                 await this.tokenService.persistRefreshToken(user);
 
-            // const MS_IN_YEAR = 1000 * 60 * 60 * 24 * 365;
-            // const refreshTokenRepository =
-            //     AppDataSource.getRepository(RefreshToken);
-
-            // const newRefreshToken = await refreshTokenRepository.save({
-            //     user: user,
-
-            //     expiresAt: new Date(Date.now() + MS_IN_YEAR),
-            // });
-
-            // const refreshToken = sign(payload, Config.REFRESH_TOKEN_SECRET!, {
-            //     algorithm: "HS256",
-            //     expiresIn: "1y",
-            //     issuer: "auth-service",
-            //     jwtid: String(newRefreshToken.id),
-            // });
-
             const refreshToken = this.tokenService.generateRefreshToken({
                 ...payload,
                 id: String(newRefreshToken.id),
@@ -168,7 +151,7 @@ export class AuthController {
 
             this.logger.info("User has been logged in", { id: user.id });
 
-            res.status(201).json({ id: user.id });
+            res.json({ id: user.id });
         } catch (err) {
             next(err);
             return;
