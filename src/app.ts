@@ -1,5 +1,5 @@
 import "reflect-metadata";
-
+import cookieParser from "cookie-parser";
 import express, { Request, Response, NextFunction } from "express";
 import logger from "./config/logger";
 import { HttpError } from "http-errors";
@@ -8,6 +8,7 @@ import authRouter from "./routes/auth";
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", async (req, res) => {
     res.send("Welcone to Authentication Service");
