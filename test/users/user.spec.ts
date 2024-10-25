@@ -81,5 +81,70 @@ describe("GET /auth/self", () => {
 
             expect((response.body as Record<string, string>).id).toBe(data.id);
         });
+
+        it("should not return the password field", async () => {
+            const userData = {
+                firstName: "Pushpankar",
+
+                lastName: "Singh",
+
+                email: "kpushpankar3@gmail.com",
+
+                password: "secrettt",
+            };
+
+            const userRepository = connection.getRepository(User);
+
+            const data = await userRepository.save({
+                ...userData,
+                role: Roles.CUSTOMER,
+            });
+            // Generate Token
+
+            const accessToken = jwks.token({
+                sub: String(data.id),
+                role: data.role,
+            });
+
+            //Add Token to cookie
+
+            const response = await request(app)
+                .get("/auth/self")
+                .set("Cookie", [`accessToken=${accessToken};`])
+                .send();
+            // Assert
+            // Check if user id matches with registered user
+
+            expect(response.body as Record<string, string>).not.toHaveProperty(
+                "secrettt",
+            );
+        });
+
+        it("should return 401 status code if token does not exist", async () => {
+            const userData = {
+                firstName: "Pushpankar",
+
+                lastName: "Singh",
+
+                email: "kpushpankar3@gmail.com",
+
+                password: "secrettt",
+            };
+
+            const userRepository = connection.getRepository(User);
+
+            await userRepository.save({
+                ...userData,
+                role: Roles.CUSTOMER,
+            });
+
+            //Add Token to cookie
+
+            const response = await request(app).get("/auth/self").send();
+            // Assert
+            // Check if user id matches with registered user
+
+            expect(response.statusCode).toBe(401);
+        });
     });
 });
