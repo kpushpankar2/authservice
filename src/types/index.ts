@@ -16,7 +16,18 @@ export interface ResgisterUserRequest extends Request {
 
 export interface AuthRequest extends Request {
     auth: {
-        sub: number;
+        sub: string;
         role: string;
+        id?: string;
     };
+}
+
+export type AuthCookie = {
+    accessToken: string;
+
+    refreshToken: string;
+};
+
+export interface IRefreshTokenPayload {
+    id: string;
 }
