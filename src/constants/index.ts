@@ -3,5 +3,5 @@ export const Roles = {
 
     ADMIN: "admin",
 
-    MANGER: "manager",
+    MANAGER: "manager",
 } as const;
