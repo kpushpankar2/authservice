@@ -8,6 +8,8 @@ export interface UserData {
     email: string;
 
     password: string;
+
+    role: string;
 }
 
 export interface ResgisterUserRequest extends Request {
