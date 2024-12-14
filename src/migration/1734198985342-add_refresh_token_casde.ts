@@ -22,4 +22,6 @@ export class AddRefreshtokenCascade1699475145577 implements MigrationInterface {
     }
 }
 
+
 // npm run migration:create -- src/migration/add_refresh_token_casde  for creating empty migration
+// To Run Migration  npm run migration:run -- -d src/config/data-source.ts
