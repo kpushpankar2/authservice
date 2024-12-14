@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
-import { AuthRequest, ResgisterUserRequest } from "../types";
+import { AuthRequest, RegisterUserRequest } from "../types";
 import { UserService } from "../services/UserService";
 import { Logger } from "winston";
 import { validationResult } from "express-validator";
@@ -8,6 +8,7 @@ import { TokenService } from "../services/TokenService";
 import createHttpError from "http-errors";
 import { CredentialService } from "../services/CredentialService";
 import { Roles } from "../constants";
+// import { Config } from "../config";
 
 export class AuthController {
     constructor(
@@ -18,7 +19,7 @@ export class AuthController {
     ) {}
 
     async register(
-        req: ResgisterUserRequest,
+        req: RegisterUserRequest,
         res: Response,
         next: NextFunction,
     ) {
@@ -46,11 +47,17 @@ export class AuthController {
                 role: Roles.CUSTOMER,
             });
 
-            this.logger.info("User has been registered");
+            this.logger.info("User has been registered", { id: user.id });
 
             const payload: JwtPayload = {
                 sub: String(user.id),
-                roles: user.role,
+                role: user.role,
+                // add tenant id to the payload
+                tenant: user.tenant ? String(user.tenant.id) : "",
+
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
             };
 
             const accessToken = this.tokenService.generateAccessToken(payload);
@@ -65,7 +72,7 @@ export class AuthController {
             res.cookie("accessToken", accessToken, {
                 domain: "localhost",
                 sameSite: "strict",
-                maxAge: 1000 * 60 * 60, // 1hr
+                maxAge: 1000 * 60 * 60 * 24 * 1, // 1hr
                 httpOnly: true,
             });
 
@@ -83,27 +90,25 @@ export class AuthController {
         }
     }
 
-    async login(req: ResgisterUserRequest, res: Response, next: NextFunction) {
+    async login(req: RegisterUserRequest, res: Response, next: NextFunction) {
+        // Validation
         const result = validationResult(req);
-
         if (!result.isEmpty()) {
             return res.status(400).json({ errors: result.array() });
         }
-
         const { email, password } = req.body;
 
-        this.logger.debug("New Request to login a user ", {
+        this.logger.debug("New request to login a user", {
             email,
             password: "******",
         });
 
         try {
-            const user = await this.userService.findByEmail(email);
-
+            const user = await this.userService.findByEmailWithPassword(email);
             if (!user) {
                 const error = createHttpError(
                     400,
-                    "Email or password does not match",
+                    "Email or password does not match.",
                 );
                 next(error);
                 return;
@@ -117,7 +122,7 @@ export class AuthController {
             if (!passwordMatch) {
                 const error = createHttpError(
                     400,
-                    "Email or password does not match",
+                    "Email or password does not match.",
                 );
                 next(error);
                 return;
@@ -125,11 +130,16 @@ export class AuthController {
 
             const payload: JwtPayload = {
                 sub: String(user.id),
-                roles: user.role,
+                role: user.role,
+                tenant: user.tenant ? String(user.tenant.id) : "",
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
             };
 
             const accessToken = this.tokenService.generateAccessToken(payload);
 
+            // Persist the refresh token
             const newRefreshToken =
                 await this.tokenService.persistRefreshToken(user);
 
@@ -137,22 +147,22 @@ export class AuthController {
                 ...payload,
                 id: String(newRefreshToken.id),
             });
+
             res.cookie("accessToken", accessToken, {
                 domain: "localhost",
                 sameSite: "strict",
-                maxAge: 1000 * 60 * 60, // 1hr
-                httpOnly: true,
+                maxAge: 1000 * 60 * 60 * 24 * 1, // 1d
+                httpOnly: true, // Very important
             });
 
             res.cookie("refreshToken", refreshToken, {
                 domain: "localhost",
                 sameSite: "strict",
-                maxAge: 1000 * 60 * 60 * 24 * 365, // 1Y
-                httpOnly: true,
+                maxAge: 1000 * 60 * 60 * 24 * 365, // 1y
+                httpOnly: true, // Very important
             });
 
             this.logger.info("User has been logged in", { id: user.id });
-
             res.json({ id: user.id });
         } catch (err) {
             next(err);
@@ -173,6 +183,10 @@ export class AuthController {
             const payload: JwtPayload = {
                 sub: req.auth.sub,
                 roles: req.auth.role,
+                tenant: req.auth.tenant,
+                firstName: req.auth.firstName,
+                lastName: req.auth.lastName,
+                email: req.auth.email,
             };
 
             const accessToken = this.tokenService.generateAccessToken(payload);
